@@ -40,8 +40,7 @@ function createApp (router) {
 }
 
 function closeApp (done) {
-  if (server == null) return;
-
+  if (server == null) return done();
   server.close(done);
   server = null;
   app = null;
@@ -51,9 +50,9 @@ describe("koa-detour", function () {
   // beforeEach(createApp);
   afterEach(closeApp);
 
-  describe("basic routing", function () {
+  describe("#route", function () {
 
-    it("200s for plain GET", function (done) {
+    it("properly routes a basic GET request", function (done) {
       createApp(new Detour()
         .route("/", { GET: worked })
       );
@@ -109,7 +108,7 @@ describe("koa-detour", function () {
     });
   });
 
-  describe("use", function () {
+  describe("#use", function () {
     it("adds a middleware", function (done) {
       createApp(new Detour()
         .use(function (ctx) {
@@ -172,6 +171,63 @@ describe("koa-detour", function () {
       v.expectBody("not found");
       v.test(done);
     });
+  });
+
+  describe("fallback handlers", function () {
+    it("405's by default when method not supported by resource", function (done) {
+      createApp(new Detour().route("/", { GET: worked }));
+      v.expectStatus(405);
+      v.expectBody("Not allowed");
+      v.method("POST");
+      v.test(done);
+    });
+
+    it("provides a sane OPTIONS response by default", function (done) {
+      createApp(new Detour().route("/", { GET: worked, POST: worked }));
+      v.expectStatus(200);
+      v.expectBody("Allow: GET,POST");
+      v.method("OPTIONS");
+      // TODO test Allow header
+      v.test(done);
+    });
+  });
+
+  describe("#handle", function () {
+    it("throws if provided an unknown type", function () {
+      expect(() => {
+        new Detour().handle("BAD_KEY", () => {})
+      }).toThrow("Invalid `type` argument to `handle()`: BAD_KEY")
+    });
+
+    it("allows overriding `methodNotAllowed`", function (done) {
+      createApp(new Detour()
+        .route("/", { GET: worked })
+        .handle("methodNotAllowed", function (ctx) {
+          ctx.status = 405;
+          ctx.body = "No way, pal!";
+        })
+      );
+      v.expectStatus(405);
+      v.expectBody("No way, pal!");
+      v.method("POST");
+      v.test(done);
+    });
+
+    it("allows overriding `OPTIONS`", function (done) {
+      createApp(new Detour()
+        .route("/", { GET: worked })
+        .handle("OPTIONS", function (ctx) {
+          ctx.status = 404;
+          ctx.body = "Not found";
+        })
+      );
+      v.expectStatus(404);
+      v.expectBody("Not found");
+      v.method("OPTIONS");
+      v.test(done);
+    });
+
+    // not quite sure what HEAD is supposed to do
   });
 
 });

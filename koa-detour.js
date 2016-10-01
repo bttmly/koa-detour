@@ -1,15 +1,18 @@
-// TODO
-function validateResource (resource) {
+const urlgrey = require("urlgrey");
 
-}
-
-// TODO
-function getMethods (resource) {
-
-}
+const methods = new Set(require("methods")
+    .map(m => m.toUpperCase()));
 
 const Route = require("./route");
-const urlgrey = require("urlgrey");
+
+// TODO
+function validateResource (resource) {}
+function validatePath (path) {}
+
+function getMethods (resource) {
+  return Object.keys(resource)
+    .filter(key => methods.has(key));
+}
 
 const defaultHandlers = {
   methodNotAllowed (ctx) {
@@ -97,9 +100,11 @@ class Detour {
   // to special-handle resolutions from the resource
   resourceOk (fn) { this._resourceOk = fn; return this; }
 
-  use (func) { this._middleware.push(func); return this; }
+  // add a general middleware
+  use (fn) { this._middleware.push(fn); return this; }
 
   route (path, resource) {
+    validatePath(path);
     validateResource(resource);
 
     const route = new Route(path, resource, {
