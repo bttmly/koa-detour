@@ -1,7 +1,5 @@
 const expect = require("expect");
 const verity = require("verity");
-const Bluebird = require("bluebird");
-const sinon = require("sinon");
 
 const Koa = require("koa");
 const Detour = require("../koa-detour");
@@ -26,8 +24,7 @@ function failed (ctx) {
 function createApp (router) {
   app = new Koa();
   app.use(router.middleware());
-  server = app.listen(9999)
-
+  server = app.listen(PORT)
   v = verity(`http://localhost:${PORT}`, `GET`);
   v.expectBody("success");
   v.expectStatus(200);
@@ -76,10 +73,18 @@ describe("koa-detour", function () {
     });
 
     it("200s for plain POST", function (done) {
-      createApp(new Detour()
-        .route("/", { POST: worked })
-      );
+      createApp(new Detour().route("/", { POST: worked }));
       v.method("POST");
+      v.test(done);
+    });
+
+    it("routes are terminal -- no `next` is provided", function (done) {
+      createApp(new Detour().route("/", {
+        GET (ctx, next) {
+          expect(next).toBe(undefined);
+          worked(ctx);
+        }
+      }));
       v.test(done);
     });
 
@@ -116,7 +121,7 @@ describe("koa-detour", function () {
     it("adds a middleware", function (done) {
       createApp(new Detour()
         .use(function (ctx) {
-          return Bluebird.delay(200).then(function () {
+          return Promise.resolve().then(function () {
             ctx.middlewareAdded = "success";
           });
         })
@@ -194,32 +199,48 @@ describe("koa-detour", function () {
     it("resourceErr receives the rejection value of the resource", function (done) {
       createApp(new Detour()
         .route("/", {
-          GET (ctx) { throw new Error("not found") }
+          GET (ctx) { throw new Error("Bad Request") }
         })
         .resourceErr(function (ctx, err) {
-          ctx.status = 404;
+          ctx.status = 400;
           ctx.body = err.message;
         })
       );
 
-      v.expectStatus(404);
-      v.expectBody("not found");
+      v.expectStatus(400);
+      v.expectBody("Bad Request");
+      v.test(done);
+    });
+
+    it("an error in the middleware stack won't reach resourceErr", function (done) {
+      createApp(new Detour()
+        .use(function () { throw new Error("Bad Request") })
+        .route("/", { GET: worked })
+        .resourceErr(function (ctx, err) {
+          ctx.status = 400;
+          ctx.body = err.message;
+        })
+      );
+
+      // Koa default 500 responder took over and sent this
+      v.expectStatus(500);
+      v.expectBody("Internal Server Error");
       v.test(done);
     });
 
     it("middlewareErr receives the rejection value of the middleware stack", function (done) {
       createApp(new Detour()
-        .use(function (ctx) { throw new Error("not found"); })
+        .use(function (ctx) { throw new Error("Bad Request"); })
         .route("/", { GET: worked })
         .middlewareErr(function (ctx, err) {
-          ctx.status = 404;
+          ctx.status = 400;
           ctx.body = err.message;
           ctx.continue = false;
         })
       );
 
-      v.expectStatus(404);
-      v.expectBody("not found");
+      v.expectStatus(400);
+      v.expectBody("Bad Request");
       v.test(done);
     });
   });
@@ -343,7 +364,17 @@ describe("koa-detour", function () {
         v.test(done);
       });
     });
+  });
 
+  describe("#apply", function () {
+    it("takes a function that gets called with the router, and returns the router", function () {
+      let arg;
+      const router = new Detour();
+      const plugin = _arg => arg = _arg;
+      const result = router.apply(plugin);
+      expect(result).toBe(router);
+      expect(arg).toBe(router);
+    });
   });
 
 });

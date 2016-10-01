@@ -122,6 +122,9 @@ class Detour {
   // add a general middleware
   use (fn) { this._middleware.push(fn); return this; }
 
+  // tiny helper for plugins that want to call several methods on router
+  apply (fn) { fn(this); return this; }
+
   route (path, resource) {
     validatePath(path);
     validateResource(resource);
