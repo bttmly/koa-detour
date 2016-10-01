@@ -16,7 +16,8 @@ let app, server, v;
 
 process.on("unhandledRejection", err => { throw err; });
 
-function worked (ctx) {
+function worked (ctx, fn) {
+  if (fn) fn(ctx);
   ctx.status = 200;
   ctx.body = "success";
 }
@@ -25,6 +26,8 @@ function failed (ctx) {
   ctx.status = 200;
   ctx.body = "failed";
 }
+
+
 
 function createApp (router) {
   app = new Koa();
@@ -121,6 +124,52 @@ describe("koa-detour", function () {
           }
         })
       );
+      v.test(done);
+    });
+  });
+
+  describe("override hooks", function () {
+    it("resourceOk receives the resolution value of the resource", function (done) {
+      createApp(new Detour().route("/", {
+          GET (ctx) { return Promise.resolve("success") }
+        })
+        .resourceOk(function (ctx, value) {
+          ctx.status = 200;
+          ctx.body = value;
+        })
+      );
+      v.test(done);
+    });
+
+    it("resourceErr receives the rejection value of the resource", function (done) {
+      createApp(new Detour()
+        .route("/", {
+          GET (ctx) { throw new Error("not found") }
+        })
+        .resourceErr(function (ctx, err) {
+          ctx.status = 404;
+          ctx.body = err.message;
+        })
+      );
+
+      v.expectStatus(404);
+      v.expectBody("not found");
+      v.test(done);
+    });
+
+    it("middlewareErr receives the rejection value of the middleware stack", function (done) {
+      createApp(new Detour()
+        .use(function (ctx) { throw new Error("not found"); })
+        .route("/", { GET: worked })
+        .middlewareErr(function (ctx, err) {
+          ctx.status = 404;
+          ctx.body = err.message;
+          ctx.continue = false;
+        })
+      );
+
+      v.expectStatus(404);
+      v.expectBody("not found");
       v.test(done);
     });
   });

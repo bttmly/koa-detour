@@ -31,6 +31,8 @@ const defaultHandlers = {
   },
 }
 
+function rethrow (ctx, err) { throw err; }
+function rereturn (ctx, value) { return value; }
 
 class Detour {
 
@@ -38,6 +40,9 @@ class Detour {
     this._middleware = [];
     this._routes = [];
     this._handlers = Object.create(defaultHandlers);
+    this._resourceOk = rereturn;
+    this._resourceErr = rethrow;
+    this._middlewareErr = rethrow;
   }
 
   middleware () {
@@ -71,28 +76,28 @@ class Detour {
     }
 
     return pipeCtx(ctx, this._middleware)
-      .catch(err => this.middlewareErr(ctx, err))
+      .catch(err => this._middlewareErr(ctx, err))
       .then(() => {
+          // TODO -- this is wonky, figure out a better way
+          if (ctx.continue === false) return;
+
           return Promise.resolve()
             .then(() => resource[method](ctx))
-            .then(result => this.resourceOk(ctx, result))
-            .catch(err => this.resourceErr(ctx, err))
+            .then(result => this._resourceOk(ctx, result))
+            .catch(err => this._resourceErr(ctx, err))
         });
   }
 
-  // override this to special-handle rejections from the middleware stack
-  middlewareErr (ctx, err) { throw err; }
+  // to special-handle rejections from the middleware stack
+  middlewareErr (fn) { this._middlewareErr = fn; return this; }
 
-  // override this to special-handle rejections from the resource
-  resourceErr (ctx, err) { throw err; }
+  // to special-handle rejections from the resource
+  resourceErr (fn) { this._resourceErr = fn; return this; }
 
-  // override this to special-handle resolutions from the resource
-  resourceOk (ctx, result) { return result; }
+  // to special-handle resolutions from the resource
+  resourceOk (fn) { this._resourceOk = fn; return this; }
 
-  use (func) {
-    this._middleware.push(func);
-    return this;
-  }
+  use (func) { this._middleware.push(func); return this; }
 
   route (path, resource) {
     validateResource(resource);
