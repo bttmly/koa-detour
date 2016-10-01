@@ -366,6 +366,45 @@ describe("koa-detour", function () {
     });
   });
 
+  describe("#collection", function () {
+    it("throws if `.collection` not present", function () {
+      expect(() => {
+        new Detour().collection("/test/:id", { member: { GET: { worked} } })
+      }).toThrow(/requires an object/)
+    });
+
+    it("does just collection routing", function (done) {
+      createApp(new Detour()
+        .collection("/test/:id", { collection: { GET: worked } }));
+      v.uri = v.uri.path("test");
+      v.test(done);
+    });
+
+    it("does member and collection routing", function (done) {
+      createApp(new Detour()
+        .collection("/test/:id", {
+          collection: { GET: worked },
+          member: { 
+            GET (ctx) { 
+              ctx.body = ctx.params.id;
+              ctx.status = 200;
+            }
+          },
+        })
+      );
+
+      v.uri = v.uri.path("test");
+      v.test(err => {
+        if (err) return done(err);
+        v = verity(`http://localhost:${PORT}`, `GET`);
+        v.uri = v.uri.path("test/abcd");
+        v.expectStatus(200);
+        v.expectBody("abcd");
+        v.test(done);
+      });
+    });
+  });
+
   describe("#apply", function () {
     it("takes a function that gets called with the router, and returns the router", function () {
       let arg;

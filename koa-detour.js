@@ -145,14 +145,44 @@ class Detour {
     this._handlers[type] = handler;
     return this;
   }
+
+  collection (path, pairObj) {
+    if (pairObj.collection == null) {
+      throw new Error("Detour.collection() requires an object with a `collection` property.  Path was: " + path);
+    }
+
+    if (pairObj.member) {
+      this.route(path, pairObj.member);
+    }
+
+    this.route(parentPath(path), pairObj.collection);
+
+    return this;
+  }
 }
 
 function pipeCtx (ctx, fns) {
-  if (fns.length === 0) return Promise.resolve();
-
+  // if (fns.length === 0) return Promise.resolve();
   return fns.reduce(function (prms, fn) {
     return prms.then(() => fn(ctx));
   }, Promise.resolve());
 }
+
+function parentPath (path){
+  const pieces = path.split("/");
+  const last = pieces.pop();
+  if (!last){
+    pieces.pop();
+  }
+  return pieces.join("/");
+};
+
+function parentPath (path) {
+  return "/" + path.split("/")
+    .filter(Boolean)
+    .slice(0, -1)
+    .join("/");
+}
+
 
 module.exports = Detour;

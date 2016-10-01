@@ -27,22 +27,17 @@
   },
   "homepage": "https://github.com/cainus/detour",
   "devDependencies": {
-    "babel-preset-stage-0": "^6.16.0",
-    "babel-register": "^6.16.3",
-    "bluebird": "^3.4.6",
     "coveralls": "2.6.1",
     "istanbul": "0.2.3",
     "jshint": "2.4.0",
     "koa": "^2.0.0",
     "mocha": "1.16.2",
     "should": "2.1.1",
-    "sinon": "^1.17.6"
+    "expect": "^1.20.2",
+    "verity": "0.4.0"
   },
   "dependencies": {
-    "connect": "3.1.0",
-    "expect": "^1.20.2",
     "methods": "0.1.0",
-    "urlgrey": "0.4.4",
-    "verity": "0.4.0"
+    "urlgrey": "0.4.4"
   }
 }
