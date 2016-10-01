@@ -5,66 +5,19 @@ const methods = new Set(require("methods")
 
 const Route = require("./route");
 
-function validateResource (resource) {
-  if (!Object.keys(resource).some(k => methods.has(k))) {
-    throw new Error("Resource should have at least one key with a valid HTTP verb");
-  }
-}
-
-function validatePath (path) {
-  if (typeof path === "string") return;
-  if (Array.isArray(path)) return;
-  if (({}).toString.call(path) == "[object RegExp]") return;
-  throw new Error(`Invalid path: ${path}`);
-}
-
-function getMethods (resource) {
-  return Object.keys(resource)
-    .filter(key => methods.has(key));
-}
-
-const defaultHandlers = {
-  methodNotAllowed (ctx) {
-    const header = getMethods(ctx.resource).join(",");
-    ctx.set("Allow", header)
-    ctx.status = 405;
-    ctx.body = "Method Not Allowed";
-  },
-  OPTIONS (ctx) {
-    const header = getMethods(ctx.resource).join(",");
-    ctx.set("Allow", header);
-    ctx.status = 200;
-    ctx.body = `Allow: ${header}`;
-  },
-  HEAD (ctx, next) {
-    const router = this._self();
-    const {resource} = ctx;
-
-    if (resource.GET == null){
-      return router._handlers.methodNotAllowed(ctx);
-    }
-
-    ctx.req.method = "GET";
-    return router._dispatch(ctx, next);
-  },
-}
-
-function rethrow (ctx, err) { throw err; }
-function rereturn (ctx, value) { return value; }
-
 class Detour {
 
   constructor (options = {}) {
     this._middleware = [];
     this._routes = [];
     this._handlers = Object.create(defaultHandlers);
-    this._handlers._self = () => this;
     this._resourceOk = rereturn;
     this._resourceErr = rethrow;
     this._middlewareErr = rethrow;
-
-    this.strict = options.strict;
-    this.caseSensitive = options.caseSensitive;
+    this._routeOptions = {
+      strict: options.strict,
+      caseSensitive: options.caseSensitive,
+    };
   }
 
   middleware () {
@@ -75,19 +28,18 @@ class Detour {
     const path = urlgrey(ctx.req.url).path();
     const route = this._routes.find(r => r.match(path));
 
-    if (route == null) {
-      return next();
-    }
+    if (route == null) return next();
 
-    const resource = ctx.resource = route.resource;
-    const params = ctx.params = {};
+    // ctx.router = this;
+    ctx.resource = route.resource;
+    ctx.params = {};
     Object.keys(route.params).forEach(k => ctx.params[k] = route.params[k]);
 
     const method = ctx.req.method.toUpperCase();
 
-    if (resource[method] == null) {
+    if (ctx.resource[method] == null) {
       if (method === "HEAD" && this._handlers.HEAD) {
-        return this._handlers.HEAD(ctx);
+        return this._handlers.HEAD(ctx, next, this);
       }
 
       if (method === "OPTIONS" && this._handlers.OPTIONS) {
@@ -104,7 +56,7 @@ class Detour {
         if (ctx.continue === false) return;
 
         return Promise.resolve()
-          .then(() => resource[method](ctx))
+          .then(() => ctx.resource[method](ctx))
           .then(result => this._resourceOk(ctx, result))
           .catch(err => this._resourceErr(ctx, err))
       });
@@ -129,10 +81,7 @@ class Detour {
     validatePath(path);
     validateResource(resource);
 
-    const route = new Route(path, resource, {
-      sensitive: this.caseSensitive,
-      strict: this.strict
-    });
+    const route = new Route(path, resource, this._routeOptions);
 
     this._routes.push(route);
     return this;
@@ -161,6 +110,35 @@ class Detour {
   }
 }
 
+
+const defaultHandlers = {
+  methodNotAllowed (ctx) {
+    const header = getMethods(ctx.resource).join(",");
+    ctx.set("Allow", header)
+    ctx.status = 405;
+    ctx.body = "Method Not Allowed";
+  },
+
+  OPTIONS (ctx) {
+    const header = getMethods(ctx.resource).join(",");
+    ctx.set("Allow", header);
+    ctx.status = 200;
+    ctx.body = `Allow: ${header}`;
+  },
+
+  HEAD (ctx, next, router) {
+    const {resource} = ctx;
+
+    if (resource.GET == null){
+      return router._handlers.methodNotAllowed(ctx);
+    }
+
+    ctx.req.method = "GET";
+    return router._dispatch(ctx, next);
+  },
+}
+
+
 function pipeCtx (ctx, fns) {
   // if (fns.length === 0) return Promise.resolve();
   return fns.reduce(function (prms, fn) {
@@ -184,5 +162,25 @@ function parentPath (path) {
     .join("/");
 }
 
+function validateResource (resource) {
+  if (!Object.keys(resource).some(k => methods.has(k))) {
+    throw new Error("Resource should have at least one key with a valid HTTP verb");
+  }
+}
+
+function validatePath (path) {
+  if (typeof path === "string") return;
+  if (Array.isArray(path)) return;
+  if (({}).toString.call(path) == "[object RegExp]") return;
+  throw new Error(`Invalid path: ${path}`);
+}
+
+function getMethods (resource) {
+  return Object.keys(resource)
+    .filter(key => methods.has(key));
+}
+
+function rethrow (ctx, err) { throw err; }
+function rereturn (ctx, value) { return value; }
 
 module.exports = Detour;

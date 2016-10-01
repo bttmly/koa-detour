@@ -8,10 +8,9 @@ const PORT = 9999;
 
 let app, server, v;
 
-process.on("unhandledRejection", err => { throw err; });
+// process.on("unhandledRejection", err => { throw err; });
 
-function worked (ctx, fn) {
-  if (fn) fn(ctx);
+function worked (ctx) {
   ctx.status = 200;
   ctx.body = "success";
 }
@@ -38,7 +37,7 @@ function closeApp (done) {
 }
 
 describe("koa-detour", function () {
-  // beforeEach(createApp);
+
   afterEach(closeApp);
 
   describe("#route", function () {
