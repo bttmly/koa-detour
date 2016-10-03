@@ -3,7 +3,7 @@ const urlgrey = require("urlgrey");
 const methods = new Set(require("methods")
     .map(m => m.toUpperCase()));
 
-const Route = require("./route");
+const Route = require("./koa-route");
 
 class Detour {
 
@@ -16,7 +16,7 @@ class Detour {
     this._middlewareErr = rethrow;
     this._routeOptions = {
       strict: options.strict,
-      caseSensitive: options.caseSensitive,
+      sensitive: options.caseSensitive,
     };
   }
 
@@ -30,10 +30,8 @@ class Detour {
 
     if (route == null) return next();
 
-    // ctx.router = this;
     ctx.resource = route.resource;
-    ctx.params = {};
-    Object.keys(route.params).forEach(k => ctx.params[k] = route.params[k]);
+    ctx.params = route.params(path);
 
     const method = ctx.req.method.toUpperCase();
 

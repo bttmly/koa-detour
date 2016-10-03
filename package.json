@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "methods": "0.1.0",
+    "path-to-regexp": "^1.6.0",
     "urlgrey": "0.4.4"
   }
 }

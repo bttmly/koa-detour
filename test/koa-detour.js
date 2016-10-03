@@ -87,6 +87,15 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
+    it("404s when no route is matched", function (done) {
+      createApp(new Detour().route("/", { GET: worked }));
+      v.method("GET");
+      v.uri = v.uri.path("test");
+      v.expectStatus(404);
+      v.expectBody("Not Found");
+      v.test(done);
+    });
+
   });
 
   describe("context additions", function () {
