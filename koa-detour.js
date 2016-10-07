@@ -11,9 +11,8 @@ class Detour {
     this._middleware = [];
     this._routes = [];
     this._handlers = Object.create(defaultHandlers);
-    this._resourceOk = rereturn;
-    this._resourceErr = rethrow;
-    this._middlewareErr = rethrow;
+    this._handleOk = rereturn;
+    this._handleErr = rethrow;
     this._routeOptions = {
       strict: options.strict,
       sensitive: options.caseSensitive,
@@ -48,26 +47,16 @@ class Detour {
     }
 
     return pipeCtx(ctx, this._middleware)
-      .catch(err => this._middlewareErr(ctx, err))
-      .then(() => {
-        // TODO -- this is wonky, figure out a better way
-        if (ctx.continue === false) return;
-
-        return Promise.resolve()
-          .then(() => ctx.resource[method](ctx))
-          .then(result => this._resourceOk(ctx, result))
-          .catch(err => this._resourceErr(ctx, err))
-      });
+      .then(() => ctx.resource[method](ctx))
+      .then(result => this._handleOk(ctx, result))
+      .catch(err => this._handleErr(ctx, err))
   }
 
-  // to special-handle rejections from the middleware stack
-  middlewareErr (fn) { this._middlewareErr = fn; return this; }
+  // to special-handle rejections
+  onCatch (fn) { this._handleErr = fn; return this; }
 
-  // to special-handle rejections from the resource
-  resourceErr (fn) { this._resourceErr = fn; return this; }
-
-  // to special-handle resolutions from the resource
-  resourceOk (fn) { this._resourceOk = fn; return this; }
+  // to special-handle resolutions
+  onThen (fn) { this._handleOk = fn; return this; }
 
   // add a general middleware
   use (fn) { this._middleware.push(fn); return this; }
@@ -151,13 +140,6 @@ function parentPath (path){
     pieces.pop();
   }
   return pieces.join("/");
-};
-
-function parentPath (path) {
-  return "/" + path.split("/")
-    .filter(Boolean)
-    .slice(0, -1)
-    .join("/");
 }
 
 function validateResource (resource) {

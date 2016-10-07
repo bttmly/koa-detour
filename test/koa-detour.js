@@ -192,11 +192,11 @@ describe("koa-detour", function () {
   });
 
   describe("override hooks", function () {
-    it("resourceOk receives the resolution value of the resource", function (done) {
+    it("onThen receives the resolution value of the resource", function (done) {
       createApp(new Detour().route("/", {
           GET (ctx) { return Promise.resolve("success") }
         })
-        .resourceOk(function (ctx, value) {
+        .onThen(function (ctx, value) {
           ctx.status = 200;
           ctx.body = value;
         })
@@ -204,12 +204,12 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
-    it("resourceErr receives the rejection value of the resource", function (done) {
+    it("onCatch receives a rejection value from the resource", function (done) {
       createApp(new Detour()
         .route("/", {
           GET (ctx) { throw new Error("Bad Request") }
         })
-        .resourceErr(function (ctx, err) {
+        .onCatch(function (ctx, err) {
           ctx.status = 400;
           ctx.body = err.message;
         })
@@ -220,27 +220,11 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
-    it("an error in the middleware stack won't reach resourceErr", function (done) {
-      createApp(new Detour()
-        .use(function () { throw new Error("Bad Request") })
-        .route("/", { GET: worked })
-        .resourceErr(function (ctx, err) {
-          ctx.status = 400;
-          ctx.body = err.message;
-        })
-      );
-
-      // Koa default 500 responder took over and sent this
-      v.expectStatus(500);
-      v.expectBody("Internal Server Error");
-      v.test(done);
-    });
-
-    it("middlewareErr receives the rejection value of the middleware stack", function (done) {
+    it("onCatch receives a rejection value from the middleware stack", function (done) {
       createApp(new Detour()
         .use(function (ctx) { throw new Error("Bad Request"); })
         .route("/", { GET: worked })
-        .middlewareErr(function (ctx, err) {
+        .onCatch(function (ctx, err) {
           ctx.status = 400;
           ctx.body = err.message;
           ctx.continue = false;

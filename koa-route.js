@@ -26,7 +26,7 @@ module.exports = class Route {
       const key = keys[index];
       const prop = key.name;
       const val = decodeParam(match);
-      if (val !== undefined || !(hasOwnProperty.call(params, prop))) {
+      if (val !== undefined || !params.hasOwnProperty(prop)) {
         params[prop] = val;
       }
       return params;

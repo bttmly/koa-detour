@@ -1,14 +1,14 @@
 {
-  "name": "detour",
-  "version": "1.3.3",
-  "description": "Resource-oriented routing:  Route to objects instead of functions for better code-reuse and organization.",
+  "name": "koa-detour",
+  "version": "0.1.0",
+  "description": "Resource-oriented routing for Koa 2+",
   "main": "index.js",
   "scripts": {
-    "test": "make test-coveralls"
+    "test": "mocha test"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/cainus/detour.git"
+    "url": "git://github.com/nickb1080/koa-detour.git"
   },
   "keywords": [
     "router",
@@ -20,12 +20,12 @@
     "http",
     "api"
   ],
-  "author": "Gregg Caines",
+  "authors": ["Gregg Caines", "Nick Bottomley"],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/cainus/detour/issues"
+    "url": "https://github.com/nickb1080/koa-detour/issues"
   },
-  "homepage": "https://github.com/cainus/detour",
+  "homepage": "https://github.com/nickb1080/koa-detour",
   "devDependencies": {
     "coveralls": "2.6.1",
     "istanbul": "0.2.3",
