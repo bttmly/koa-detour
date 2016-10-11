@@ -2,13 +2,13 @@ const expect = require("expect");
 const verity = require("verity");
 
 const Koa = require("koa");
-const Detour = require("../koa-detour");
+const Detour = require("../lib");
 
 const PORT = 9999;
 
 let app, server, v;
 
-// process.on("unhandledRejection", err => { throw err; });
+process.on("unhandledRejection", err => { throw err; });
 
 function worked (ctx) {
   ctx.status = 200;
@@ -41,7 +41,7 @@ describe("koa-detour", function () {
   afterEach(closeApp);
 
   describe("#route", function () {
-    
+
     it("throws if path argument is invalid", function () {
       expect(() => {
         new Detour().route({}, { GET: worked });
@@ -113,7 +113,7 @@ describe("koa-detour", function () {
     });
 
     it("adds `resource`", function (done) {
-      const resource = { 
+      const resource = {
         GET (ctx) {
           expect(ctx.resource).toBe(resource);
           worked(ctx);
@@ -376,8 +376,8 @@ describe("koa-detour", function () {
       createApp(new Detour()
         .collection("/test/:id", {
           collection: { GET: worked },
-          member: { 
-            GET (ctx) { 
+          member: {
+            GET (ctx) {
               ctx.body = ctx.params.id;
               ctx.status = 200;
             }

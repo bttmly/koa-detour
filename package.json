@@ -2,7 +2,7 @@
   "name": "koa-detour",
   "version": "0.1.0",
   "description": "Resource-oriented routing for Koa 2+",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
     "test": "mocha test"
   },
