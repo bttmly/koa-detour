@@ -1,6 +1,6 @@
 {
   "name": "koa-detour",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Resource-oriented routing for Koa 2+",
   "main": "lib/index.js",
   "scripts": {
@@ -20,7 +20,10 @@
     "http",
     "api"
   ],
-  "authors": ["Gregg Caines", "Nick Bottomley"],
+  "authors": [
+    "Gregg Caines",
+    "Nick Bottomley"
+  ],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/nickb1080/koa-detour/issues"
