@@ -192,11 +192,11 @@ describe("koa-detour", function () {
   });
 
   describe("override hooks", function () {
-    it("onThen receives the resolution value of the resource", function (done) {
+    it("handleSuccess receives the resolution value of the resource", function (done) {
       createApp(new Detour().route("/", {
           GET (ctx) { return Promise.resolve("success") }
         })
-        .onThen(function (ctx, value) {
+        .handleSuccess(function (ctx, value) {
           ctx.status = 200;
           ctx.body = value;
         })
@@ -204,12 +204,12 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
-    it("onCatch receives a rejection value from the resource", function (done) {
+    it("handleError receives a rejection value from the resource", function (done) {
       createApp(new Detour()
         .route("/", {
           GET (ctx) { throw new Error("Bad Request") }
         })
-        .onCatch(function (ctx, err) {
+        .handleError(function (ctx, err) {
           ctx.status = 400;
           ctx.body = err.message;
         })
@@ -220,11 +220,11 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
-    it("onCatch receives a rejection value from the middleware stack", function (done) {
+    it("handleError receives a rejection value from the middleware stack", function (done) {
       createApp(new Detour()
         .use(function (ctx) { throw new Error("Bad Request"); })
         .route("/", { GET: worked })
-        .onCatch(function (ctx, err) {
+        .handleError(function (ctx, err) {
           ctx.status = 400;
           ctx.body = err.message;
           ctx.continue = false;
