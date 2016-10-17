@@ -1,6 +1,10 @@
 # koa-detour
 
-### TODO -- the text below is from the original [detour](https://github.com/cainus/detour)
+[![Build Status](https://travis-ci.org/nickb1080/koa-detour.svg?branch=master)](https://travis-ci.org/nickb1080/koa-detour)
+[![Coverage Status](https://coveralls.io/repos/github/nickb1080/koa-detour/badge.svg?branch=master)](https://coveralls.io/github/nickb1080/koa-detour?branch=master)
+
+### These docs are for the original [detour](https://github.com/cainus/detour)
+### Proper README coming soon
 
 Detour is a router for node.js web applications.
 
@@ -13,7 +17,7 @@ It works for node.js' standard HTTP server, as well as [express](http://expressj
 
 ## Examples:
 
-### Using it in a plain node.js web app: 
+### Using it in a plain node.js web app:
 
 ```javascript
   var detour = require('detour');
@@ -41,7 +45,7 @@ It works for node.js' standard HTTP server, as well as [express](http://expressj
   var app = express();
   var router = detour();
   app.use(router.middleware);
-  
+
   router.route('/', {
     GET : function(req, res){
       res.end("GET works!");
@@ -61,7 +65,7 @@ A simple example:
       res.end("GET works: " + req.pathVar.test_id);
       // a request to /test/1234 will have output like this:
       //   GET works: 1234
-      
+
       // req.pathVar is a hash of all name value pairs pull from the
       // request url
     },
@@ -160,7 +164,7 @@ router.on('HEAD', function(req, res, resource){
 ### Error defaults and overrides:
 
 #### 405 handling:
-The correct http response for a method that an existing url doesn't support is a 405.  You can over-ride the default like this: 
+The correct http response for a method that an existing url doesn't support is a 405.  You can over-ride the default like this:
 ```javascript
 router.on(405, function(req, res, resource){
   // resource is the object you routed.  You can loop through the methods on it here if you want!
@@ -177,15 +181,5 @@ router.on(404, function(req, res){
   res.end("nope. couldn't find that!")
 });
 ```
-(NOTE: this only works if the middleware doesn't get a third parameter -- typically called `next()` -- passed to it, 
+(NOTE: this only works if the middleware doesn't get a third parameter -- typically called `next()` -- passed to it,
 otherwise `next()` is used for 404s as you'd expect from a middleware.)
-
-
-
-
-
-
-
-
-
-
