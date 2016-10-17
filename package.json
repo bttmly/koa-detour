@@ -5,7 +5,8 @@
   "main": "lib/index.js",
   "scripts": {
     "test": "nyc mocha",
-    "cover": "nyc report --reporter=text-lcov | coveralls"
+    "cover": "nyc report --reporter=text-lcov | coveralls",
+    "travis": "npm run test; npm run cover;"
   },
   "repository": {
     "type": "git",
