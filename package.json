@@ -4,7 +4,8 @@
   "description": "Resource-oriented routing for Koa 2+",
   "main": "lib/index.js",
   "scripts": {
-    "test": "mocha test"
+    "test": "nyc mocha",
+    "cover": "nyc report --reporter=text-lcov | coveralls"
   },
   "repository": {
     "type": "git",
@@ -30,13 +31,14 @@
   },
   "homepage": "https://github.com/nickb1080/koa-detour",
   "devDependencies": {
-    "coveralls": "2.6.1",
-    "istanbul": "0.2.3",
+    "coveralls": "^2.6.1",
+    "expect": "^1.20.2",
+    "istanbul": "^0.2.3",
     "jshint": "2.4.0",
     "koa": "^2.0.0",
     "mocha": "1.16.2",
+    "nyc": "^8.3.1",
     "should": "2.1.1",
-    "expect": "^1.20.2",
     "verity": "0.4.0"
   },
   "dependencies": {
