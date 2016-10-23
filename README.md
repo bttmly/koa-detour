@@ -3,17 +3,11 @@
 [![Build Status](https://travis-ci.org/nickb1080/koa-detour.svg?branch=master)](https://travis-ci.org/nickb1080/koa-detour)
 [![Coverage Status](https://coveralls.io/repos/github/nickb1080/koa-detour/badge.svg?branch=master)](https://coveralls.io/github/nickb1080/koa-detour?branch=master)
 
-### These docs are for the original [detour](https://github.com/cainus/detour)
-### Proper README coming soon
+KoaDetour is an expressive router for [Koa v2](https://github.com/koajs/koa/issues/533) applications.
 
-Detour is a router for node.js web applications.
-
-Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have http methods) instead of to http methods.
+Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have HTTP methods) instead of to HTTP methods directly.
 
 Rationale:  If you have multiple http methods implemented for a given url (like a lot of APIs do), this style of routing will be much more natural and will vastly improve your code organization and re-use.  With object routing, it's much simpler to keep the related handlers together, but separated from unrelated handlers (often even in another file/module).
-
-It works for node.js' standard HTTP server, as well as [express](http://expressjs.com) and [connect](http://www.senchalabs.org/connect/) applications.
-
 
 ## Basic Example
 ```js
