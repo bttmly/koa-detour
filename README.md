@@ -48,7 +48,7 @@ This makes Detour extremely extensible on a resource-by-resource basis. For exam
 
 ```js
 router.route("/user/:id", {
-  mustBeAuthenticated : true,   // <-- note this property
+  mustBeAuthenticated: true, // <-- note this property
   GET (ctx) {
     ctx.body = `GET works: ${ctx.params.id}`
   },
@@ -58,7 +58,7 @@ router.route("/user/:id", {
 You might have a middleware like so:
 ```js
 router.use(function (ctx) {
-  if (ctx.mustBeAuthenticated && !ctx.user) {
+  if (ctx.resource.mustBeAuthenticated && !ctx.user) {
     throw new Error("Not authenticated!");
   }
 });
