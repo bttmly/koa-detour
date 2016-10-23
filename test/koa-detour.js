@@ -204,6 +204,17 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
+    it("500s if the resource stack rejects without a handleError override", function (done) {
+      createApp(new Detour()
+        .route("/", {
+          GET (ctx) { throw new Error("Bad Request") }
+        })
+      );
+      v.expectBody("Internal Server Error");
+      v.expectStatus(500);
+      v.test(done);
+    });
+
     it("handleError receives a rejection value from the resource", function (done) {
       createApp(new Detour()
         .route("/", {
@@ -259,6 +270,14 @@ describe("koa-detour", function () {
       createApp(new Detour().route("/", { GET: worked }));
       v.expectBody("");
       v.method("HEAD");
+      v.test(done);
+    });
+
+    it("405 on HEAD if no GET", function (done) {
+      createApp(new Detour().route("/", { POST: worked }));
+      v.method("HEAD");
+      v.expectStatus(405);
+      v.expectBody("");
       v.test(done);
     });
   });
@@ -367,7 +386,7 @@ describe("koa-detour", function () {
 
     it("does just collection routing", function (done) {
       createApp(new Detour()
-        .collection("/test/:id", { collection: { GET: worked } }));
+        .collection("/test/:id/", { collection: { GET: worked } }));
       v.uri = v.uri.path("test");
       v.test(done);
     });

@@ -15,171 +15,89 @@ Rationale:  If you have multiple http methods implemented for a given url (like 
 It works for node.js' standard HTTP server, as well as [express](http://expressjs.com) and [connect](http://www.senchalabs.org/connect/) applications.
 
 
-## Examples:
-
-### Using it in a plain node.js web app:
-
-```javascript
-  var detour = require('detour');
-  var http   = require('http');
-  var router = detour();
-
-  router.route('/', {
-    GET : function(req, res){
-      res.end("GET works!");
-    },
-    POST : function(req, res){
-      res.end("POST works too!");
-    }
-  });
-
-  http.createServer(function(req, res){
-    router.middleware(req, res);
-  }).listen(9999);
-```
-
-### Using it in an express app:
-```javascript
-  var detour = require('detour');
-  var express = require('express');
-  var app = express();
-  var router = detour();
-  app.use(router.middleware);
-
-  router.route('/', {
-    GET : function(req, res){
-      res.end("GET works!");
-    },
-    POST : function(req, res){
-      res.end("POST works too!");
-    }
-  });
-
-```
-### Path Variables:
-A simple example:
-
-```javascript
-  router.route('/test/:test_id', {
-    GET : function(req, res){
-      res.end("GET works: " + req.pathVar.test_id);
-      // a request to /test/1234 will have output like this:
-      //   GET works: 1234
-
-      // req.pathVar is a hash of all name value pairs pull from the
-      // request url
-    },
-  });
-
-```
-In the example above, you can see that the path string sent to the router (`/test/:test_id`) uses the [same format as express](http://expressjs.com/api.html#app.VERB).  Regular expressions are also allowed.
-
-
-You can also see from the example  that within a route handler, `req.pathVar` will have all the variables collected from your route.
-
-### connect-style middleware
-Detour supports connect-style middleware like most node.js
-frameworks (including [express](http://expressjs.com)).  Example:
-```javascript
-  var detour = require('detour');
-  var router = detour();
-  router.use(someMiddleware);
-```
-
-The middleware stack for detour runs after the route has been
-determined, but before any other processing.  The entire routed resource
-object will be available at `req.detourHandler` if you want to do any
-special handling in your middleware that are related to its contents.
-
-This makes Detour extremely extensible on a resource-by-resource basis.  For example, if you write a resource object like this:
-
-```javascript
-  router.route('/test/:test_id', {
-    mustBeAuthenticated : true,   // <-- NB: non-standard property
-    GET : function(req, res){
-      res.end("GET works: " + req.pathVar.test_id);
-    },
-  });
-
-```
-
-...you can write a middleware that acts according to that data before the handler
-for GET is called.
-
-
-### collections
-In addition to regular object routing, For the sake of convenience, Detour also supports collection-routing where two resource objects can be routed in a
-collection-member relationship at the same time.
-
-Here's an example:
-
-```javascript
-var router = new Router();
-router.collection('/test/:testid', {
-  collection : {
-    GET : function(req, res){
-      res.end('collection here!');
-    }
+## Basic Example
+```js
+const app = new Koa();
+const router = new KoaDetour();
+app.use(router.middleware());
+router.route("/user", {
+  GET (ctx) {
+    ctx.body = "GET works!";
   },
-  member : {
-    GET : function(req, res){
-      res.end('member here! ' + JSON.stringify(req.pathVar));
-    }
+  POST (ctx) {
+    ctx.body = "POST also works";
+  },
+});
+```
+
+## Path parameters
+```js
+// path parameters (indicated by colons) are available at `ctx.params`
+// this is a change from detour, which used `req.pathVars`
+router.route("/user/:id", {
+  GET (ctx) {
+    ctx.body = `GET works: ${ctx.params.id}`
+  },
+});
+```
+
+## Resource-based middleware
+The middleware stack for detour runs after the route has been determined, but before any other processing. The entire routed resource object will be available at `ctx.resource` if you want to do any special handling in your middleware that are related to its contents. Middleware functions can return Promises (or be `async`, which amounts to the same thing). Interestingly, middleware functions *do not* receive a `next` argument to continue processing. Rather, the pattern should be to throw an error (or reject the returned promise) when something goes awry that should cause the main HTTP verb handler to not run.
+
+This makes Detour extremely extensible on a resource-by-resource basis. For example, if you write a resource object like this:
+
+```js
+router.route("/user/:id", {
+  mustBeAuthenticated : true,   // <-- note this property
+  GET (ctx) {
+    ctx.body = `GET works: ${ctx.params.id}`
+  },
+});
+```
+
+You might have a middleware like so:
+```js
+router.use(function (ctx) {
+  if (ctx.mustBeAuthenticated && !ctx.user) {
+    throw new Error("Not authenticated!");
   }
 });
 ```
 
-Note: the object being routed has two properties: `collection` and
-`member`, with each being a resource object on its own.  The `member`
-resource object will be routed to the given path (`/test/:testid` in this
-case), and the `collection` resource object will be routed to the parent
-path (`/test` in this case).
+In this case, Koa will send a 500 response automatically, which is not the correct status code in this situation. Read on...
 
-This feature can be useful if you have resources that follow this
-pattern and you want to keep these two similar resources together in the same file.
+## Hooks
 
+### `handleError`
+The `handleError` hook controls what is done with errors from the middleware stack or the HTTP handler. Continuing the example directly above, we want to send a 401 if the user is not authenticated.
 
-### Method defaults and overrides:
+```js
+router.handleError(function (ctx, err) {
+  if (err.message === Errors.Unauthenticated) {
+    ctx.status = 401;
+    ctx.body = err.message;
+    return;
+  }
 
-#### OPTIONS handling:
-There is a default OPTIONS response for any route but you can over-ride it like this:
-```javascript
-router.on('OPTIONS', function(req, res, resource){
-  // resource is the object you routed.  You can loop through the methods on it here if you want!
-  res.writeHead(200);
-  res.end("options, options, options!");
+  // ... perhaps more handling for other types of errors;
 });
 ```
 
-#### HEAD handling:
-There is a default HEAD response for any route with a GET, but you can over-ride it like this:
-```javascript
-router.on('HEAD', function(req, res, resource){
-  // resource is the object you routed.  You can call resource.GET() from here if you want!
-  res.writeHead(200);
-  res.end("doesn't matter what I type here.  node will not send output on a HEAD request")
+### `handleSuccess`
+The `handleSuccess` hook determines what happens to values that come out of HTTP handlers. Usually in Koa you need to do things like `ctx.status = 200; ctx.body = "Ok!"`. This kind of imperative mutation is annoying, and lowers the abstraction level. With `koa-detour`, you can use the `handleSuccess` hook to have HTTP handlers return values.
+```js
+router.route("/user/:id", function (ctx) {
+  // this is asynchronous and returns a promise
+  return User.findById(id);
+});
+router.handleSuccess(function (ctx, result) {
+  // in real code we'd want something a little more complicated to return other success statuses
+  ctx.body = result;
+  ctx.status = 200;
 });
 ```
 
-### Error defaults and overrides:
+This is great for avoiding repetitive code in HTTP handlers, and for keeping the resources tidy.
 
-#### 405 handling:
-The correct http response for a method that an existing url doesn't support is a 405.  You can over-ride the default like this:
-```javascript
-router.on(405, function(req, res, resource){
-  // resource is the object you routed.  You can loop through the methods on it here if you want!
-  res.writeHead(405);
-  res.end("this resource doesn't support that method! ");
-});
-```
-
-#### 404 handling:
-There is a default 404 response for any route that doesn't match, but you can over-ride it like this:
-```javascript
-router.on(404, function(req, res){
-  res.writeHead(404);
-  res.end("nope. couldn't find that!")
-});
-```
-(NOTE: this only works if the middleware doesn't get a third parameter -- typically called `next()` -- passed to it,
-otherwise `next()` is used for 404s as you'd expect from a middleware.)
+### Add-ons
+[`koa-deotour-addons`](https://github.com/nickb1080/koa-detour-addons) provides some helpers for common middleware, and support for returning or throwing [response objects](https://github.com/nickb1080/responses).
