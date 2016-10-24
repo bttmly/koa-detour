@@ -3,6 +3,7 @@ const verity = require("verity");
 
 const Koa = require("koa");
 const Detour = require("../lib");
+const Route = require("../lib/route");
 
 const PORT = 9999;
 
@@ -426,5 +427,17 @@ describe("koa-detour", function () {
       expect(arg).toBe(router);
     });
   });
+});
 
+describe("Route", function () {
+  it("gives an informative error if decoding fails", function () {
+    const route = new Route("/user/:id");
+    try {
+      route.params("/user/%E0%A4%A");
+    } catch (err) {
+      expect(err.message).toEqual("Failed to decode param '%E0%A4%A'")
+      return;
+    }
+    throw new Error("shouldn't get here");
+  });
 });
