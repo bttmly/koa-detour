@@ -239,7 +239,6 @@ describe("koa-detour", function () {
         .handleError(function (ctx, err) {
           ctx.status = 400;
           ctx.body = err.message;
-          ctx.continue = false;
         })
       );
 
@@ -288,6 +287,12 @@ describe("koa-detour", function () {
       expect(() => {
         new Detour().handle("BAD_KEY", () => {})
       }).toThrow("Invalid `type` argument to `handle()`: BAD_KEY")
+    });
+
+    it("throws if handler argument isn't a function", function () {
+      expect(() => {
+        new Detour().handle("methodNotAllowed", {})
+      }).toThrow("Handler must be a function")
     });
 
     it("allows overriding `methodNotAllowed`", function (done) {
