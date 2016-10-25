@@ -18,11 +18,16 @@ router.route("/user", {
   GET (ctx) {
     ctx.body = "GET works!";
   },
+  // obviously you'll almost always do something asynchronous in a handler.
+  // so, just return a promise here and the router will wait on it
   POST (ctx) {
-    ctx.body = "POST also works";
+    return createUser(ctx.body)
+      .then(user => ctx.body = user);
   },
 });
 ```
+Note here that the HTTP handlers (`GET` and `POST`) in this example do *not* receive a `next` function like normal Koa middleware. This is because there is a distinction between routes and middleware -- routes should be terminal. They handle the request and send a response, or they error, which will be picked up by a downstream error handler. Either way, no other HTTP handler is going to run.
+
 
 ## Path parameters
 ```js
@@ -58,7 +63,7 @@ router.use(function (ctx) {
 });
 ```
 
-In this case, Koa will send a 500 response automatically, which is not the correct status code in this situation. Read on...
+All middleware and HTTP handlers are executed in promise chains, so it's safe to throw an error like the one above -- it won't crash the process! However, in this case, Koa will send a 500 response automatically, which is not the correct status code in this situation. Read on...
 
 ## Hooks
 
@@ -73,7 +78,7 @@ router.handleError(function (ctx, err) {
     return;
   }
 
-  // ... perhaps more handling for other types of errors;
+  // ... perhaps more handling for other types of errors ...
 });
 ```
 
