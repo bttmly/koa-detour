@@ -95,3 +95,11 @@ This is great for avoiding repetitive code in HTTP handlers, and for keeping the
 
 ### Add-ons
 [`koa-deotour-addons`](https://github.com/nickb1080/koa-detour-addons) provides some helpers for common middleware, and support for returning or throwing [response objects](https://github.com/nickb1080/responses).
+
+These addons are designed to make it easier to factor and implement a production API that needs to return correct responses and status codes in a variety of cases. Briefly:
+
+- `schema` checks that the request contents are valid, so it 400s if it fails
+- `authenticate` checks that the user is logged in, so it 401s if it fails
+- `forbid` checks that the user has access to the resource, so it 403s if it fails
+- `fetch` is intended to get the resource from the data store, so it 404s if it fails.
+- `respond` is responsible for turning response objects into calls to the Koa context, completing the response
