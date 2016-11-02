@@ -124,6 +124,18 @@ describe("koa-detour", function () {
       createApp(new Detour().route("/", resource));
       v.test(done);
     });
+
+    it("adds `route`", function (done) {
+      let route;
+      const resource = { GET (ctx) { ({route} = ctx); worked(ctx); } };
+
+      createApp(new Detour().route("/some-silly-path", resource));
+      v.uri = v.uri.path("/some-silly-path");
+      v.test(err => {
+        expect(route.path).toBe("/some-silly-path");
+        done(err);
+      });
+    });
   });
 
   describe("#use and middleware behavior", function () {
