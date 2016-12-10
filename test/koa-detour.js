@@ -133,6 +133,7 @@ describe("koa-detour", function () {
       v.uri = v.uri.path("/some-silly-path");
       v.test(err => {
         expect(route.path).toBe("/some-silly-path");
+        expect(route.resource).toBe(resource);
         done(err);
       });
     });
@@ -225,7 +226,10 @@ describe("koa-detour", function () {
       );
       v.expectBody("Internal Server Error");
       v.expectStatus(500);
-      v.test(done);
+      v.test(err => {
+        console.log("NOTE: the above error is printed by Koa default's behavior");
+        done(err);
+      });
     });
 
     it("handleError receives a rejection value from the resource", function (done) {
@@ -378,10 +382,10 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
-    // not sure what's going on here -- verity/urlgrey maybe trimming the slash?
-    xit("accepts a `strict` option", function (done) {
-      createApp(new Detour({strict: true}).route("/test", { GET: worked }))
-      v.uri = v.uri.path("test/");
+    // can't use v.uri.path because UrlGrey trims trailing slashes
+    it("accepts a `strict` option", function (done) {
+      createApp(new Detour({strict: true}).route("/test" /* NOTE no trailing slash */, { GET: worked }))
+      v.uri = `http://localhost:${PORT}/test/` // <-- NOTE trailing slash
       v.expectStatus(404);
       v.expectBody("Not Found");
       v.test(err => {
@@ -448,13 +452,8 @@ describe("koa-detour", function () {
 
 describe("Route", function () {
   it("gives an informative error if decoding fails", function () {
-    const route = new Route("/user/:id");
-    try {
-      route.params("/user/%E0%A4%A");
-    } catch (err) {
-      expect(err.message).toEqual("Failed to decode param '%E0%A4%A'")
-      return;
-    }
-    throw new Error("shouldn't get here");
+    expect(() => {
+      new Route("/user/:id").params("/user/%E0%A4%A");
+    }).toThrow(/Failed to decode param '%E0%A4%A'/)
   });
 });
