@@ -391,9 +391,9 @@ describe("koa-detour", function () {
       v.test(err => {
         if (err) return done(err);
         v = verity(`http://localhost:${PORT}`, `GET`);
+        v.uri = v.uri.path("test"); // <-- NOTE no trailing slash
         v.expectStatus(200);
         v.expectBody("success");
-        v.uri = v.uri.path("test");
         v.test(done);
       });
     });
