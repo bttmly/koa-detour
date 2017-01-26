@@ -24,8 +24,8 @@ function failed (ctx) {
 function createApp (router) {
   app = new Koa();
   app.use(router.middleware());
-  server = app.listen(PORT)
-  v = verity(`http://localhost:${PORT}`, `GET`);
+  server = app.listen(PORT);
+  v = verity(`http://localhost:${PORT}`, "GET");
   v.expectBody("success");
   v.expectStatus(200);
 }
@@ -91,7 +91,7 @@ describe("koa-detour", function () {
         GET (ctx, next) {
           expect(next).toBe(undefined);
           worked(ctx);
-        }
+        },
       }));
       v.test(done);
     });
@@ -112,11 +112,11 @@ describe("koa-detour", function () {
       createApp(new Detour()
         .route("/a/:a/b/:b", {
           GET (ctx) {
-            expect(ctx.params).toEqual({ a: "x", b: "y" })
+            expect(ctx.params).toEqual({ a: "x", b: "y" });
             worked(ctx);
-          }
+          },
         })
-      )
+      );
       v.uri = v.uri.path("/a/x/b/y");
       v.test(done);
     });
@@ -126,7 +126,7 @@ describe("koa-detour", function () {
         GET (ctx) {
           expect(ctx.resource).toBe(resource);
           worked(ctx);
-        }
+        },
       };
 
       createApp(new Detour().route("/", resource));
@@ -159,7 +159,7 @@ describe("koa-detour", function () {
           GET (ctx) {
             ctx.status = 200;
             ctx.body = ctx.middlewareAdded;
-          }
+          },
         })
       );
       v.test(done);
@@ -205,7 +205,7 @@ describe("koa-detour", function () {
           GET (ctx) {
             ctx.status = 200;
             ctx.body = ctx.prop;
-          }
+          },
         })
       );
       v.expectBody("abc");
@@ -216,7 +216,7 @@ describe("koa-detour", function () {
   describe("override hooks", function () {
     it("handleSuccess receives the resolution value of the resource", function (done) {
       createApp(new Detour().route("/", {
-          GET (ctx) { return Promise.resolve("success") }
+          GET (ctx) { return Promise.resolve("success"); },
         })
         .handleSuccess(function (ctx, value) {
           ctx.status = 200;
@@ -229,7 +229,7 @@ describe("koa-detour", function () {
     it("500s if the resource stack rejects without a handleError override", function (done) {
       createApp(new Detour()
         .route("/", {
-          GET (ctx) { throw new Error("Bad Request") }
+          GET (ctx) { throw new Error("Bad Request"); },
         })
       );
       v.expectBody("Internal Server Error");
@@ -243,7 +243,7 @@ describe("koa-detour", function () {
     it("handleError receives a rejection value from the resource", function (done) {
       createApp(new Detour()
         .route("/", {
-          GET (ctx) { throw new Error("Bad Request") }
+          GET (ctx) { throw new Error("Bad Request"); },
         })
         .handleError(function (ctx, err) {
           ctx.status = 400;
@@ -309,15 +309,15 @@ describe("koa-detour", function () {
   describe("#handle", function () {
     it("throws if provided an unknown type", function () {
       expect(() => {
-        new Detour().handle("BAD_KEY", () => {})
-      }).toThrow('`type` argument must be one of "OPTIONS", "HEAD", "methodNotAllowed", found: BAD_KEY');
+        new Detour().handle("BAD_KEY", () => {});
+      }).toThrow("`type` argument must be one of 'OPTIONS', 'HEAD', 'methodNotAllowed', found: BAD_KEY");
     });
 
     it("throws if handler argument isn't a function", function () {
       ["HEAD", "OPTIONS", "methodNotAllowed"].forEach(method => {
         expect(() => {
-          new Detour().handle(method, {})
-        }).toThrow("Handler must be a function")
+          new Detour().handle(method, {});
+        }).toThrow("Handler must be a function");
       });
     });
 
@@ -334,7 +334,6 @@ describe("koa-detour", function () {
       v.method("POST");
       v.test(done);
     });
-
     // without this override, OPTIONS would 200
     it("allows overriding `OPTIONS`", function (done) {
       createApp(new Detour()
@@ -364,24 +363,61 @@ describe("koa-detour", function () {
       v.method("HEAD");
       v.test(done);
     });
+
+    it("errors from handlers methods flow to `handleError`", function (done) {
+      createApp(new Detour()
+        .route("/", { GET: worked })
+        .handle("methodNotAllowed", function (ctx) {
+          const err = new Error(`Does not support ${ctx.method}`);
+          err.status = 405;
+          throw err;
+        })
+        .handleError(function (ctx, err) {
+          ctx.status = err.status;
+          ctx.body = err.message;
+        })
+      );
+      v.expectStatus(405);
+      v.expectBody("Does not support POST");
+      v.method("POST");
+      v.test(done);
+    });
+
+    it("results from handlers flow to `handleSuccess`", function (done) {
+      createApp(new Detour()
+        .route("/", { GET: worked })
+        .handle("methodNotAllowed", function (ctx) {
+          return { error: "Method Not Allowed" };
+        })
+        .handleSuccess(function (ctx, result) {
+          ctx.status = 405;
+          ctx.body = JSON.stringify(result);
+        })
+      );
+      v.expectStatus(405);
+      v.expectBody("{\"error\":\"Method Not Allowed\"}");
+      v.method("POST");
+      v.test(done);
+    });
+
   });
 
   describe("constructor options", function () {
 
     it("normally routes case-insensitive", function (done) {
-      createApp(new Detour().route("/LOUD", { GET: worked }))
+      createApp(new Detour().route("/LOUD", { GET: worked }));
       v.uri = v.uri.path("loud");
       v.test(done);
     });
 
     it("accepts a `caseSensitive` option", function (done) {
-      createApp(new Detour({caseSensitive: true}).route("/LOUD", { GET: worked }))
+      createApp(new Detour({caseSensitive: true}).route("/LOUD", { GET: worked }));
       v.uri = v.uri.path("loud");
       v.expectStatus(404);
-      v.expectBody("Not Found")
+      v.expectBody("Not Found");
       v.test(err => {
         if (err) return done(err);
-        v = verity(`http://localhost:${PORT}`, `GET`);
+        v = verity(`http://localhost:${PORT}`, "GET");
         v.expectStatus(200);
         v.expectBody("success");
         v.uri = v.uri.path("LOUD");
@@ -390,20 +426,20 @@ describe("koa-detour", function () {
     });
 
     it("normally is loose about trailing slashes", function (done) {
-      createApp(new Detour().route("/test", { GET: worked }))
+      createApp(new Detour().route("/test", { GET: worked }));
       v.uri = v.uri.path("test/");
       v.test(done);
     });
 
     // can't use v.uri.path because UrlGrey trims trailing slashes
     it("accepts a `strict` option", function (done) {
-      createApp(new Detour({strict: true}).route("/test" /* NOTE no trailing slash */, { GET: worked }))
-      v.uri = `http://localhost:${PORT}/test/` // <-- NOTE trailing slash
+      createApp(new Detour({strict: true}).route("/test" /* NOTE no trailing slash */, { GET: worked }));
+      v.uri = `http://localhost:${PORT}/test/`; // <-- NOTE trailing slash
       v.expectStatus(404);
       v.expectBody("Not Found");
       v.test(err => {
         if (err) return done(err);
-        v = verity(`http://localhost:${PORT}`, `GET`);
+        v = verity(`http://localhost:${PORT}`, "GET");
         v.uri = v.uri.path("test"); // <-- NOTE no trailing slash
         v.expectStatus(200);
         v.expectBody("success");
@@ -415,8 +451,8 @@ describe("koa-detour", function () {
   describe("#collection", function () {
     it("throws if `.collection` not present", function () {
       expect(() => {
-        new Detour().collection("/test/:id", { member: { GET: { worked} } })
-      }).toThrow(/requires an object/)
+        new Detour().collection("/test/:id", { member: { GET: { worked} } });
+      }).toThrow(/requires an object/);
     });
 
     it("does just collection routing", function (done) {
@@ -434,7 +470,7 @@ describe("koa-detour", function () {
             GET (ctx) {
               ctx.body = ctx.params.id;
               ctx.status = 200;
-            }
+            },
           },
         })
       );
@@ -442,7 +478,7 @@ describe("koa-detour", function () {
       v.uri = v.uri.path("test");
       v.test(err => {
         if (err) return done(err);
-        v = verity(`http://localhost:${PORT}`, `GET`);
+        v = verity(`http://localhost:${PORT}`, "GET");
         v.uri = v.uri.path("test/abcd");
         v.expectStatus(200);
         v.expectBody("abcd");
@@ -469,7 +505,7 @@ describe("Route", function () {
     it("gives an informative error if decoding fails", function () {
       expect(() => {
         new Route("/user/:id").params("/user/%E0%A4%A");
-      }).toThrow(/Failed to decode param '%E0%A4%A'/)
+      }).toThrow(/Failed to decode param '%E0%A4%A'/);
     });
 
     it("returns null if no match", function () {
