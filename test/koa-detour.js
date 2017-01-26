@@ -43,6 +43,14 @@ describe("koa-detour", function () {
 
   describe("#route", function () {
 
+    it("accepts an array path", function () {
+      new Detour().route([], { GET: worked });
+    });
+
+    it("accepts a regexp path", function () {
+      new Detour().route(new RegExp(), { GET: worked });
+    });
+
     it("throws if path argument is invalid", function () {
       expect(() => {
         new Detour().route({}, { GET: worked });
@@ -302,13 +310,15 @@ describe("koa-detour", function () {
     it("throws if provided an unknown type", function () {
       expect(() => {
         new Detour().handle("BAD_KEY", () => {})
-      }).toThrow("Invalid `type` argument to `handle()`: BAD_KEY")
+      }).toThrow('`type` argument must be one of "OPTIONS", "HEAD", "methodNotAllowed", found: BAD_KEY');
     });
 
     it("throws if handler argument isn't a function", function () {
-      expect(() => {
-        new Detour().handle("methodNotAllowed", {})
-      }).toThrow("Handler must be a function")
+      ["HEAD", "OPTIONS", "methodNotAllowed"].forEach(method => {
+        expect(() => {
+          new Detour().handle(method, {})
+        }).toThrow("Handler must be a function")
+      });
     });
 
     it("allows overriding `methodNotAllowed`", function (done) {
@@ -325,6 +335,7 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
+    // without this override, OPTIONS would 200
     it("allows overriding `OPTIONS`", function (done) {
       createApp(new Detour()
         .route("/", { GET: worked })
@@ -339,15 +350,17 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
+    // NOTE: Node's HTTP layer strips the body of a HEAD response
     it("allows overriding `HEAD`", function (done) {
       createApp(new Detour()
         .route("/", { GET: worked })
         .handle("HEAD", function (ctx) {
           ctx.status = 404;
+          ctx.body = "head request failed";
         })
       );
       v.expectStatus(404);
-      v.expectBody("");
+      v.expectBody(""); // body is empty string even though we set it to "head request failed"
       v.method("HEAD");
       v.test(done);
     });
@@ -451,9 +464,18 @@ describe("koa-detour", function () {
 });
 
 describe("Route", function () {
-  it("gives an informative error if decoding fails", function () {
-    expect(() => {
-      new Route("/user/:id").params("/user/%E0%A4%A");
-    }).toThrow(/Failed to decode param '%E0%A4%A'/)
+
+  describe("#params", function () {
+    it("gives an informative error if decoding fails", function () {
+      expect(() => {
+        new Route("/user/:id").params("/user/%E0%A4%A");
+      }).toThrow(/Failed to decode param '%E0%A4%A'/)
+    });
+
+    it("returns null if no match", function () {
+      expect(
+        new Route("/user/:id").params("/document/123")
+      ).toEqual(null);
+    });
   });
 });
