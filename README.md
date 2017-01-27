@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/nickb1080/koa-detour.svg?branch=master)](https://travis-ci.org/nickb1080/koa-detour)
 [![Coverage Status](https://coveralls.io/repos/github/nickb1080/koa-detour/badge.svg?branch=master)](https://coveralls.io/github/nickb1080/koa-detour?branch=master)
 
-KoaDetour is an expressive router for [Koa v2](https://github.com/koajs/koa/issues/533) applications.
+KoaDetour is an expressive router for [Koa v2](https://github.com/koajs/koa/issues/533) applications. **NOTE**: this project is NOT versioned according to Koa's versioning scheme. Specifically, all versions are intended only to work with Koa 2.0.0+.
 
 Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have HTTP methods) instead of to HTTP methods directly.
 
@@ -77,7 +77,7 @@ function someOk (fns) {
 // message route can be accessed by admins, sender, or recipient
 // we implement these elsewhere and share the logic, in various compositions
 // across many endpoints. There are many ways to factor this logic, on a spectrum
-// from more logic in the 
+// from more logic in the
 router.route("/message/:id", {
   hasAccess: someOk(
     userIsAdmin,
