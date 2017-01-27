@@ -21,7 +21,7 @@ router.route("/user", {
   // obviously you'll almost always do something asynchronous in a handler.
   // so, just return a promise here and the router will wait on it
   POST (ctx) {
-    return createUser(ctx.body)
+    return createUser(ctx.req.body)
       .then(user => ctx.body = user);
   },
 });
