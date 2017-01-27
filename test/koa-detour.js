@@ -384,18 +384,17 @@ describe("koa-detour", function () {
     });
 
     it("results from handlers flow to `handleSuccess`", function (done) {
+      const err = { error: "Method Not Allowed" };
       createApp(new Detour()
         .route("/", { GET: worked })
-        .handle("methodNotAllowed", function (ctx) {
-          return { error: "Method Not Allowed" };
-        })
+        .handle("methodNotAllowed", () => err)
         .handleSuccess(function (ctx, result) {
           ctx.status = 405;
           ctx.body = JSON.stringify(result);
         })
       );
       v.expectStatus(405);
-      v.expectBody("{\"error\":\"Method Not Allowed\"}");
+      v.expectBody(JSON.stringify(err));
       v.method("POST");
       v.test(done);
     });

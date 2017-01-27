@@ -7,7 +7,7 @@ KoaDetour is an expressive router for [Koa v2](https://github.com/koajs/koa/issu
 
 Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have HTTP methods) instead of to HTTP methods directly.
 
-Rationale:  If you have multiple http methods implemented for a given url (like a lot of APIs do), this style of routing will be much more natural and will vastly improve your code organization and re-use.  With object routing, it's much simpler to keep the related handlers together, but separated from unrelated handlers (often even in another file/module).
+Rationale:  If you have multiple http methods implemented for a given url (like a lot of APIs do), this style of routing will be much more natural and will vastly improve your code organization and re-use, and better composition and factoring of middleware.  With object routing, it's much simpler to keep the related handlers together, but separated from unrelated handlers (often even in another file/module).
 
 ## Basic Example
 ```js
@@ -59,6 +59,39 @@ You might have a middleware like so:
 router.use(function (ctx) {
   if (ctx.resource.mustBeAuthenticated && !ctx.user) {
     throw new Error("Not authenticated!");
+  }
+});
+```
+
+The declarative style of `{ [middlewareName]: value }` has many advantages. However, for more complex cases, you may want to compose functions. Here's one way that might work
+
+```js
+// helper calls each fn with ctx, checks at least 1 resolved to a truthy value
+function someOk (fns) {
+  return function (ctx) {
+    return Bluebird.map(fns, f => f(ctx))
+      .then(results => results.some(Boolean));
+  }
+}
+
+// message route can be accessed by admins, sender, or recipient
+// we implement these elsewhere and share the logic, in various compositions
+// across many endpoints. There are many ways to factor this logic, on a spectrum
+// from more logic in the 
+router.route("/message/:id", {
+  hasAccess: someOk(
+    userIsAdmin,
+    userIsSender,
+    userIsRecipient,
+  ]),
+  GET () { /* implementation */ },
+})
+
+router.use(function (ctx) {
+  if (ctx.resource.hasAccess) {
+    return ctx.resource.hasAccess(ctx).then(function (ok) {
+      if (!ok) throw new Error("Access not allowed!");
+    });
   }
 });
 ```
