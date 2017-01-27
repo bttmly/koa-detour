@@ -5,7 +5,7 @@
 
 KoaDetour is an expressive router for [Koa v2](https://github.com/koajs/koa/issues/533) applications.
 
-Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have HTTP methods) instead of to HTTP methods directly.
+Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have HTTP methods and resource-level middleware) instead of to HTTP methods directly.
 
 Rationale:  If you have multiple http methods implemented for a given url (like a lot of APIs do), this style of routing will be much more natural and will vastly improve your code organization and re-use, and better composition and factoring of middleware.  With object routing, it's much simpler to keep the related handlers together, but separated from unrelated handlers (often even in another file/module).
 
