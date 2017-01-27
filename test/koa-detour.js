@@ -213,65 +213,6 @@ describe("koa-detour", function () {
     });
   });
 
-  describe("override hooks", function () {
-    it("handleSuccess receives the resolution value of the resource", function (done) {
-      createApp(new Detour().route("/", {
-          GET (ctx) { return Promise.resolve("success"); },
-        })
-        .handleSuccess(function (ctx, value) {
-          ctx.status = 200;
-          ctx.body = value;
-        })
-      );
-      v.test(done);
-    });
-
-    it("500s if the resource stack rejects without a handleError override", function (done) {
-      createApp(new Detour()
-        .route("/", {
-          GET (ctx) { throw new Error("Bad Request"); },
-        })
-      );
-      v.expectBody("Internal Server Error");
-      v.expectStatus(500);
-      v.test(err => {
-        console.log("NOTE: the above error is printed by Koa default's behavior");
-        done(err);
-      });
-    });
-
-    it("handleError receives a rejection value from the resource", function (done) {
-      createApp(new Detour()
-        .route("/", {
-          GET (ctx) { throw new Error("Bad Request"); },
-        })
-        .handleError(function (ctx, err) {
-          ctx.status = 400;
-          ctx.body = err.message;
-        })
-      );
-
-      v.expectStatus(400);
-      v.expectBody("Bad Request");
-      v.test(done);
-    });
-
-    it("handleError receives a rejection value from the middleware stack", function (done) {
-      createApp(new Detour()
-        .use(function (ctx) { throw new Error("Bad Request"); })
-        .route("/", { GET: worked })
-        .handleError(function (ctx, err) {
-          ctx.status = 400;
-          ctx.body = err.message;
-        })
-      );
-
-      v.expectStatus(400);
-      v.expectBody("Bad Request");
-      v.test(done);
-    });
-  });
-
   describe("fallback handlers", function () {
     it("405's by default when method not supported by resource", function (done) {
       createApp(new Detour().route("/", { GET: worked }));
@@ -361,41 +302,6 @@ describe("koa-detour", function () {
       v.expectStatus(404);
       v.expectBody(""); // body is empty string even though we set it to "head request failed"
       v.method("HEAD");
-      v.test(done);
-    });
-
-    it("errors from handlers methods flow to `handleError`", function (done) {
-      createApp(new Detour()
-        .route("/", { GET: worked })
-        .handle("methodNotAllowed", function (ctx) {
-          const err = new Error(`Does not support ${ctx.method}`);
-          err.status = 405;
-          throw err;
-        })
-        .handleError(function (ctx, err) {
-          ctx.status = err.status;
-          ctx.body = err.message;
-        })
-      );
-      v.expectStatus(405);
-      v.expectBody("Does not support POST");
-      v.method("POST");
-      v.test(done);
-    });
-
-    it("results from handlers flow to `handleSuccess`", function (done) {
-      const err = { error: "Method Not Allowed" };
-      createApp(new Detour()
-        .route("/", { GET: worked })
-        .handle("methodNotAllowed", () => err)
-        .handleSuccess(function (ctx, result) {
-          ctx.status = 405;
-          ctx.body = JSON.stringify(result);
-        })
-      );
-      v.expectStatus(405);
-      v.expectBody(JSON.stringify(err));
-      v.method("POST");
       v.test(done);
     });
 
