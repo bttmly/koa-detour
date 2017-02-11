@@ -5,7 +5,7 @@
 
 KoaDetour is an expressive router for [Koa v2](https://github.com/koajs/koa/issues/533) applications. **NOTE**: this project is NOT versioned according to Koa's versioning scheme. Specifically, all versions are intended only to work with Koa 2.0.0+.
 
-Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have HTTP methods) instead of to HTTP methods directly.
+Detour is different from sinatra-style routers (like [express's router](http://expressjs.com/api.html#app.VERB)) because you **route urls to objects** (that have HTTP methods and resource-level middleware) instead of to HTTP methods directly.
 
 Rationale:  If you have multiple http methods implemented for a given url (like a lot of APIs do), this style of routing will be much more natural and will vastly improve your code organization and re-use, and better composition and factoring of middleware.  With object routing, it's much simpler to keep the related handlers together, but separated from unrelated handlers (often even in another file/module).
 
@@ -77,9 +77,10 @@ function someOk (fns) {
 // message route can be accessed by admins, sender, or recipient
 // we implement these elsewhere and share the logic, in various compositions
 // across many endpoints. There are many ways to factor this logic, on a spectrum
-// from more logic in the
+// from more logic in the middleware function passed to `use` to more logic in the
+// resource object
 router.route("/message/:id", {
-  hasAccess: someOk(
+  hasAccess: someOk([
     userIsAdmin,
     userIsSender,
     userIsRecipient,
