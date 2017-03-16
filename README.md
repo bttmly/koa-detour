@@ -24,6 +24,11 @@ router.route("/user", {
     return createUser(ctx.req.body)
       .then(user => ctx.body = user);
   },
+  // or just use `async` functions!
+  async PUT (ctx) {
+    const user = await updateUser(ctx.req.body);
+    ctx.body = user;
+  },
 });
 ```
 Note here that the HTTP handlers (`GET` and `POST`) in this example do *not* receive a `next` function like normal Koa middleware. This is because there is a distinction between routes and middleware -- routes should be terminal. They handle the request and send a response, or they error, which will be picked up by a downstream error handler. Either way, no other HTTP handler is going to run.
@@ -67,11 +72,9 @@ The declarative style of `{ [middlewareName]: value }` has many advantages. Howe
 
 ```js
 // helper calls each fn with ctx, checks at least 1 resolved to a truthy value
-function someOk (fns) {
-  return function (ctx) {
-    return Bluebird.map(fns, f => f(ctx))
-      .then(results => results.some(Boolean));
-  }
+const someOk = fns => async ctx => {
+  const results = await Bluebird.map(fns, f => f(ctx));
+  return results.some(Boolean);
 }
 
 // message route can be accessed by admins, sender, or recipient
@@ -88,11 +91,10 @@ router.route("/message/:id", {
   GET () { /* implementation */ },
 })
 
-router.use(function (ctx) {
+router.use(async function (ctx) {
   if (ctx.resource.hasAccess) {
-    return ctx.resource.hasAccess(ctx).then(function (ok) {
-      if (!ok) throw new Error("Access not allowed!");
-    });
+    const ok = await ctx.resource.hasAccess(ctx);
+    if (!ok) throw new Error("Access not allowed!");
   }
 });
 ```
