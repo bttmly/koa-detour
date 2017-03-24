@@ -143,4 +143,4 @@ These addons are designed to make it easier to factor and implement a production
 - `authenticate` checks that the user is logged in, so it 401s if it fails
 - `forbid` checks that the user has access to the resource, so it 403s if it fails
 - `fetch` is intended to get the resource from the data store, so it 404s if it fails.
-- `respond` is responsible for turning response objects into calls to the Koa context, completing the response
+- `respond` is responsible for turning response objects into calls to the Koa context, completing the response. Still trying to stabilize an API for this however.
