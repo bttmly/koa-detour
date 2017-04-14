@@ -1,7 +1,7 @@
 # koa-detour
 
-[![Build Status](https://travis-ci.org/nickb1080/koa-detour.svg?branch=master)](https://travis-ci.org/nickb1080/koa-detour)
-[![Coverage Status](https://coveralls.io/repos/github/nickb1080/koa-detour/badge.svg?branch=master)](https://coveralls.io/github/nickb1080/koa-detour?branch=master)
+[![Build Status](https://travis-ci.org/bttmly/koa-detour.svg?branch=master)](https://travis-ci.org/bttmly/koa-detour)
+[![Coverage Status](https://coveralls.io/repos/github/bttmly/koa-detour/badge.svg?branch=master)](https://coveralls.io/github/bttmly/koa-detour?branch=master)
 
 KoaDetour is an expressive router for [Koa v2](https://github.com/koajs/koa/issues/533) applications. **NOTE**: this project is NOT versioned according to Koa's versioning scheme. Specifically, all versions are intended only to work with Koa 2.0.0+.
 
@@ -135,7 +135,7 @@ router.handleSuccess(function (ctx, result) {
 This is great for avoiding repetitive code in HTTP handlers, and for keeping the resources tidy.
 
 ### Add-ons
-[`koa-deotour-addons`](https://github.com/nickb1080/koa-detour-addons) provides some helpers for common middleware, and support for returning or throwing [response objects](https://github.com/nickb1080/responses).
+[`koa-deotour-addons`](https://github.com/bttmly/koa-detour-addons) provides some helpers for common middleware, and support for returning or throwing [response objects](https://github.com/bttmly/responses).
 
 These addons are designed to make it easier to factor and implement a production API that needs to return correct responses and status codes in a variety of cases. Briefly:
 

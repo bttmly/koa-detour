@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/nickb1080/koa-detour.git"
+    "url": "git://github.com/bttmly/koa-detour.git"
   },
   "keywords": [
     "router",
@@ -28,9 +28,9 @@
   ],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/nickb1080/koa-detour/issues"
+    "url": "https://github.com/bttmly/koa-detour/issues"
   },
-  "homepage": "https://github.com/nickb1080/koa-detour",
+  "homepage": "https://github.com/bttmly/koa-detour",
   "devDependencies": {
     "coveralls": "^2.6.1",
     "eslint": "^3.14.1",
