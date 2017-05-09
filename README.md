@@ -101,38 +101,25 @@ router.use(async function (ctx) {
 
 All middleware and HTTP handlers are executed in promise chains, so it's safe to throw an error like the one above -- it won't crash the process! However, in this case, Koa will send a 500 response automatically, which is not the correct status code in this situation. Read on...
 
-## Hooks
+## Handling responses
+In Koa's built-in middleware stack, layers are intended to imperatively manipulate the context object. Any values returned from a middleware layer are discarded -- all communication between layers happens through the context object. However, the Detour model of route matching is explicitly terminal. One or zero routes match a request, and if it is one, then that route is responsible for providing the entirey of the HTTP response. This means that the function from `router.middleware()` actually returns the value the resource provided. This can be used elegantly to unify HTTP response sending:
 
-### `handleError`
-The `handleError` hook controls what is done with errors from the middleware stack or the HTTP handler. Continuing the example directly above, we want to send a 401 if the user is not authenticated.
-
-```js
-router.handleError(function (ctx, err) {
-  if (err.message === Errors.Unauthenticated) {
-    ctx.status = 401;
-    ctx.body = err.message;
-    return;
+```
+// this simplified example sends whatever comes out of the route as a 200
+const mw = router.middleware();
+app.use(async function (ctx, next) {
+  try {
+    const result = await mw(ctx, next);
+    ctx.body = result;
+    ctx.status = 200;
+  } catch (err) {
+    ctx.status = err.status || 500;
+    ctx.body = { error: err.message };
   }
-
-  // ... perhaps more handling for other types of errors ...
 });
 ```
 
-### `handleSuccess`
-The `handleSuccess` hook determines what happens to values that come out of HTTP handlers. Usually in Koa you need to do things like `ctx.status = 200; ctx.body = "Ok!"`. This kind of imperative mutation is annoying, and lowers the abstraction level. With `koa-detour`, you can use the `handleSuccess` hook to have HTTP handlers return values.
-```js
-router.route("/user/:id", function (ctx) {
-  // this is asynchronous and returns a promise
-  return User.findById(id);
-});
-router.handleSuccess(function (ctx, result) {
-  // in real code we'd want something a little more complicated to return other success statuses
-  ctx.body = result;
-  ctx.status = 200;
-});
-```
-
-This is great for avoiding repetitive code in HTTP handlers, and for keeping the resources tidy.
+This approach makes handlers cleaner, as they don't have to imperatively manipulate the context object, and can rather just return a value. [response-objects](https://github.com/bttmly/response-objects) library is built specifically for this purpose.
 
 ### Add-ons
 [`koa-deotour-addons`](https://github.com/bttmly/koa-detour-addons) provides some helpers for common middleware, and support for returning or throwing [response objects](https://github.com/bttmly/responses).
