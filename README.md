@@ -104,7 +104,7 @@ All middleware and HTTP handlers are executed in promise chains, so it's safe to
 ## Handling responses
 In Koa's built-in middleware stack, layers are intended to imperatively manipulate the context object. Any values returned from a middleware layer are discarded -- all communication between layers happens through the context object. However, the Detour model of route matching is explicitly terminal. One or zero routes match a request, and if it is one, then that route is responsible for providing the entirey of the HTTP response. This means that the function from `router.middleware()` actually returns the value the resource provided. This can be used elegantly to unify HTTP response sending:
 
-```
+```js
 // this simplified example sends whatever comes out of the route as a 200
 const mw = router.middleware();
 app.use(async function (ctx, next) {
