@@ -71,19 +71,17 @@ router.use(function (ctx) {
 The declarative style of `{ [middlewareName]: value }` has many advantages. However, for more complex cases, you may want to compose functions. Here's one way that might work
 
 ```js
-// helper calls each fn with ctx, checks at least 1 resolved to a truthy value
-const someOk = fns => async ctx => {
-  const results = await Bluebird.map(fns, f => f(ctx));
+const any = fns => async ctx => {
+  const results = await Promise.all(fns.map(f => f(ctx)));
   return results.some(Boolean);
 }
 
 // message route can be accessed by admins, sender, or recipient
-// we implement these elsewhere and share the logic, in various compositions
-// across many endpoints. There are many ways to factor this logic, on a spectrum
-// from more logic in the middleware function passed to `use` to more logic in the
-// resource object
+// we implement these predicates elsewhere and share the logic across
+// different endpoints, in different configurations, depending on
+// the intended access control rules.
 router.route("/message/:id", {
-  hasAccess: someOk([
+  hasAccess: any([
     userIsAdmin,
     userIsSender,
     userIsRecipient,
