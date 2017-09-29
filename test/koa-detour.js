@@ -76,7 +76,7 @@ describe("koa-detour", function () {
 
       expect(router._routes.length).toEqual(3);
       createApp(router);
-      v.uri = v.uri.path("test");
+      v.path("test");
       v.test(done);
     });
 
@@ -99,7 +99,7 @@ describe("koa-detour", function () {
     it("404s when no route is matched", function (done) {
       createApp(new Detour().route("/", { GET: worked }));
       v.method("GET");
-      v.uri = v.uri.path("test");
+      v.path("test");
       v.expectStatus(404);
       v.expectBody("Not Found");
       v.test(done);
@@ -117,7 +117,7 @@ describe("koa-detour", function () {
           },
         })
       );
-      v.uri = v.uri.path("/a/x/b/y");
+      v.path("/a/x/b/y");
       v.test(done);
     });
 
@@ -138,7 +138,7 @@ describe("koa-detour", function () {
       const resource = { GET (ctx) { ({route} = ctx); worked(ctx); } };
 
       createApp(new Detour().route("/some-silly-path", resource));
-      v.uri = v.uri.path("/some-silly-path");
+      v.path("/some-silly-path");
       v.test(err => {
         expect(route.path).toBe("/some-silly-path");
         expect(route.resource).toBe(resource);
@@ -309,13 +309,13 @@ describe("koa-detour", function () {
 
     it("normally routes case-insensitive", function (done) {
       createApp(new Detour().route("/LOUD", { GET: worked }));
-      v.uri = v.uri.path("loud");
+      v.path("loud");
       v.test(done);
     });
 
     it("accepts a `caseSensitive` option", function (done) {
       createApp(new Detour({caseSensitive: true}).route("/LOUD", { GET: worked }));
-      v.uri = v.uri.path("loud");
+      v.path("loud");
       v.expectStatus(404);
       v.expectBody("Not Found");
       v.test(err => {
@@ -323,14 +323,14 @@ describe("koa-detour", function () {
         v = verity(`http://localhost:${PORT}`, "GET");
         v.expectStatus(200);
         v.expectBody("success");
-        v.uri = v.uri.path("LOUD");
+        v.path("LOUD");
         v.test(done);
       });
     });
 
     it("normally is loose about trailing slashes", function (done) {
       createApp(new Detour().route("/test", { GET: worked }));
-      v.uri = v.uri.path("test/");
+      v.path("test/");
       v.test(done);
     });
 
@@ -343,7 +343,7 @@ describe("koa-detour", function () {
       v.test(err => {
         if (err) return done(err);
         v = verity(`http://localhost:${PORT}`, "GET");
-        v.uri = v.uri.path("test"); // <-- NOTE no trailing slash
+        v.path("test"); // <-- NOTE no trailing slash
         v.expectStatus(200);
         v.expectBody("success");
         v.test(done);
@@ -361,7 +361,7 @@ describe("koa-detour", function () {
     it("does just collection routing", function (done) {
       createApp(new Detour()
         .collection("/test/:id/", { collection: { GET: worked } }));
-      v.uri = v.uri.path("test");
+      v.path("test");
       v.test(done);
     });
 
@@ -378,11 +378,11 @@ describe("koa-detour", function () {
         })
       );
 
-      v.uri = v.uri.path("test");
+      v.path("test");
       v.test(err => {
         if (err) return done(err);
         v = verity(`http://localhost:${PORT}`, "GET");
-        v.uri = v.uri.path("test/abcd");
+        v.path("test/abcd");
         v.expectStatus(200);
         v.expectBody("abcd");
         v.test(done);
@@ -417,4 +417,82 @@ describe("Route", function () {
       ).toEqual(null);
     });
   });
+});
+
+describe("Returning values", function () {
+  let r, k, s;
+
+  beforeEach(function () {
+    k = new Koa();
+    k.use(async (ctx, next) => {
+      try {
+        const result = await next();
+        ctx.status = result.status;
+        ctx.body = result.body;
+      } catch (err) {
+        ctx.status = err.status;
+        ctx.body = err.body;
+      }
+    });
+
+    r = new Detour();
+    r.route("/test", {
+      async GET () {
+        return { status: 200, body: "success" };
+      },
+      async POST () {
+        const err = new Error("Kaboom!");
+        err.body = "bad request";
+        err.status = 400;
+        throw err;
+      },
+    });
+    r.handle("OPTIONS", async () => {
+      return { status: 400, body: "not ok" };
+    });
+    r.handle("methodNotAllowed", async () => {
+      const err = new Error("Kaboom!");
+      err.body = "method not allowed";
+      err.status = 405;
+      throw err;
+    });
+
+    k.use(r.middleware());
+    s = k.listen(PORT);
+  });
+
+  afterEach(function (done) {
+    if (s == null) return done();
+    s.close(done);
+  });
+
+  it("resource with `return` works", function (done) {
+    v.path("/test");
+    v.expectStatus(200);
+    v.expectBody("success");
+    v.test(done);
+  });
+
+  it("resource with `throw` works", function (done) {
+    v.path("/test");
+    v.method("POST");
+    v.expectStatus(400);
+    v.expectBody("bad request");
+    v.test(done);
+  });
+
+  it("handler with `return` works", function (done) {
+    v.path("/test");
+    v.method("OPTIONS");
+    v.expectStatus(400);
+    v.test(done);
+  });
+
+  it("handler with `throw` works", function (done) {
+    v.path("/test");
+    v.method("PUT");
+    v.expectStatus(405);
+    v.test(done);
+  });
+
 });
