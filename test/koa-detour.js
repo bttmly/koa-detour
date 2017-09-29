@@ -231,7 +231,7 @@ describe("koa-detour", function () {
 
     it("provides a sane HEAD response by default", function (done) {
       createApp(new Detour().route("/", { GET: worked }));
-      v.expectBody("");
+      v.expectBody(""); // body is automatically stripped
       v.method("HEAD");
       v.test(done);
     });
