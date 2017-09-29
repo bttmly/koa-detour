@@ -1,14 +1,16 @@
-{
-  "env": {
-    "node": true,
-    "es6": true,
-    "mocha": true
+module.exports = {
+  parserOptions: {
+    ecmaVersion: 8,
   },
-  "rules": {
-    "quotes": [ 2 ],
+  env: {
+    node: true,
+    mocha: true
+  },
+  rules: {
+    quotes: [ 2 ],
     "no-redeclare": 2,
     "no-shadow": 2,
-    "semi": [2, "always"],
+    semi: [2, "always"],
     "no-else-return": 2,
     "default-case": 2,
     "comma-dangle": [2, "always-multiline"],

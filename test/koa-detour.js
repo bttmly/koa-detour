@@ -150,10 +150,8 @@ describe("koa-detour", function () {
   describe("#use and middleware behavior", function () {
     it("adds a middleware", function (done) {
       createApp(new Detour()
-        .use(function (ctx) {
-          return Promise.resolve().then(function () {
-            ctx.middlewareAdded = "success";
-          });
+        .use(async function (ctx) {
+          ctx.middlewareAdded = "success";
         })
         .route("/", {
           GET (ctx) {
