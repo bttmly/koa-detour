@@ -4,7 +4,7 @@
   "description": "Resource-oriented routing for Koa 2+",
   "main": "lib/index.js",
   "scripts": {
-    "test": "eslint test lib; NODE_ENV=testing nyc mocha",
+    "test": "eslint test lib; NODE_ENV=testing nyc mocha --reporter spec",
     "cover": "nyc report --reporter=text-lcov | coveralls",
     "travis": "npm run test; npm run cover;"
   },
@@ -39,12 +39,10 @@
     "koa": "^2.0.0",
     "mocha": "1.16.2",
     "nyc": "^8.3.1",
-    "verity": "0.7.3"
+    "verity": "^0.8.1"
   },
   "dependencies": {
     "methods": "0.1.0",
-    "p-try": "^1.0.0",
-    "path-to-regexp": "^1.6.0",
-    "urlgrey": "0.4.4"
+    "path-to-regexp": "^1.6.0"
   }
 }
