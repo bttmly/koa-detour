@@ -231,7 +231,7 @@ describe("koa-detour", function () {
 
     it("provides a sane HEAD response by default", function (done) {
       createApp(new Detour().route("/", { GET: worked }));
-      v.expectBody("");
+      v.expectBody(""); // body is automatically stripped
       v.method("HEAD");
       v.test(done);
     });
@@ -417,82 +417,4 @@ describe("Route", function () {
       ).toEqual(null);
     });
   });
-});
-
-describe("Returning values", function () {
-  let r, k, s;
-
-  beforeEach(function () {
-    k = new Koa();
-    k.use(async (ctx, next) => {
-      try {
-        const result = await next();
-        ctx.status = result.status;
-        ctx.body = result.body;
-      } catch (err) {
-        ctx.status = err.status;
-        ctx.body = err.body;
-      }
-    });
-
-    r = new Detour();
-    r.route("/test", {
-      async GET () {
-        return { status: 200, body: "success" };
-      },
-      async POST () {
-        const err = new Error("Kaboom!");
-        err.body = "bad request";
-        err.status = 400;
-        throw err;
-      },
-    });
-    r.handle("OPTIONS", async () => {
-      return { status: 400, body: "not ok" };
-    });
-    r.handle("methodNotAllowed", async () => {
-      const err = new Error("Kaboom!");
-      err.body = "method not allowed";
-      err.status = 405;
-      throw err;
-    });
-
-    k.use(r.middleware());
-    s = k.listen(PORT);
-  });
-
-  afterEach(function (done) {
-    if (s == null) return done();
-    s.close(done);
-  });
-
-  it("resource with `return` works", function (done) {
-    v.path("/test");
-    v.expectStatus(200);
-    v.expectBody("success");
-    v.test(done);
-  });
-
-  it("resource with `throw` works", function (done) {
-    v.path("/test");
-    v.method("POST");
-    v.expectStatus(400);
-    v.expectBody("bad request");
-    v.test(done);
-  });
-
-  it("handler with `return` works", function (done) {
-    v.path("/test");
-    v.method("OPTIONS");
-    v.expectStatus(400);
-    v.test(done);
-  });
-
-  it("handler with `throw` works", function (done) {
-    v.path("/test");
-    v.method("PUT");
-    v.expectStatus(405);
-    v.test(done);
-  });
-
 });
