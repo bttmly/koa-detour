@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "types": ["node"],
+    "lib": "ES2015"
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
