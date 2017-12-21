@@ -5,14 +5,17 @@ import Route from "./route";
 const methods = _methods.map(m => m.toUpperCase());
 
 import * as compose from "koa-compose";
-import Koa = require("koa");
-type Middleware = compose.Middleware<Context>;
+import * as Koa from "koa";
+
+type Middleware = (ctx: Context) => any;
+type MethodHandler = (ctx: Context) => any;
+type Next = Function;
 
 interface Resource {
-  GET?: (ctx: Context) => any;
-  PUT?: (ctx: Context) => any;
-  POST?: (ctx: Context) => any;
-  DELETE?: (ctx: Context) => any;
+  GET?: (ctx: Context) => MethodHandler;
+  PUT?: (ctx: Context) => MethodHandler;
+  POST?: (ctx: Context) => MethodHandler;
+  DELETE?: (ctx: Context) => MethodHandler;
   name?: string;
 }
 
@@ -27,7 +30,7 @@ interface Context extends Koa.Context {
   params: any;
 }
 
-type Handler = (ctx: Context, next?: Function, self?: Detour) => void | Promise<void>
+type Handler = (ctx: Context, next?: Next, self?: Detour) => void | Promise<void>
 
 type Options = {
   strict?: boolean;
@@ -53,10 +56,10 @@ class Detour {
   }
 
   middleware () {
-    return (ctx, next) => this._dispatch(ctx, next);
+    return (ctx: Context, next: Next) => this._dispatch(ctx, next);
   }
 
-  async _dispatch (ctx, next) {
+  async _dispatch (ctx: Context, next: Next) {
     const path = (new URL(ctx.request.url)).pathname;
     const route = this._routes.find(r => r.match(path));
 
@@ -66,9 +69,11 @@ class Detour {
     ctx.resource = route.resource;
     ctx.params = route.params(path);
 
-    const method = ctx.req.method.toUpperCase();
+    const method = ctx.request.method.toUpperCase();
 
-    if (ctx.resource[method] == null) {
+    const methodHandler: MethodHandler = ctx.resource[method];
+
+    if (methodHandler == null) {
       switch (method) {
         case "HEAD": return this._handlers.HEAD(ctx, next, this);
         case "OPTIONS": return this._handlers.OPTIONS(ctx);
@@ -80,7 +85,7 @@ class Detour {
     for (const fn of this._middleware) await fn(ctx);
 
     // then call the relevant HTTP handler on the resource
-    return ctx.resource[method](ctx);
+    return methodHandler(ctx);
   }
 
   // add a general middleware
@@ -97,7 +102,7 @@ class Detour {
     return this;
   }
 
-  handle (type, handler) {
+  handle (type: HandlerType, handler: Handler) {
 
     if (!defaultHandlers.hasOwnProperty(type)) {
       throw new Error(`\`type\` argument must be one of 'OPTIONS', 'HEAD', 'methodNotAllowed', found: ${type}`);

@@ -1,8 +1,13 @@
 {
   "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "target": "es2017",
     "outDir": "dist",
-    "types": ["node"],
-    "lib": "ES2015"
+    "lib": ["es2017"],
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "strict": true
   },
   "include": [
     "src/**/*"
