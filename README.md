@@ -119,13 +119,3 @@ app.use(async function (ctx, next) {
 
 This approach makes handlers cleaner, as they don't have to imperatively manipulate the context object, and can rather just return a value. [response-objects](https://github.com/bttmly/response-objects) library is built specifically for this purpose.
 
-### Add-ons
-[`koa-deotour-addons`](https://github.com/bttmly/koa-detour-addons) provides some helpers for common middleware, and support for returning or throwing [response objects](https://github.com/bttmly/responses).
-
-These addons are designed to make it easier to factor and implement a production API that needs to return correct responses and status codes in a variety of cases. Briefly:
-
-- `schema` checks that the request contents are valid, so it 400s if it fails
-- `authenticate` checks that the user is logged in, so it 401s if it fails
-- `forbid` checks that the user has access to the resource, so it 403s if it fails
-- `fetch` is intended to get the resource from the data store, so it 404s if it fails.
-- `respond` is responsible for turning response objects into calls to the Koa context, completing the response. Still trying to stabilize an API for this however.
