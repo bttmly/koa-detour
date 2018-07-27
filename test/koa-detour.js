@@ -163,6 +163,12 @@ describe("koa-detour", function () {
       v.test(done);
     });
 
+    it("throws if passed non-function", function () {
+      expect(() => {
+        new Detour().use({});
+      }).toThrow("`use` requires a function");
+    });
+
     it("middleware isn't invoked when no route is matched", function (done) {
       let called = false;
       createApp(new Detour()
@@ -398,6 +404,12 @@ describe("koa-detour", function () {
       const result = router.apply(plugin);
       expect(result).toBe(router);
       expect(arg).toBe(router);
+    });
+
+    it("throws if passed non-function", function () {
+      expect(() => {
+        new Detour().apply({});
+      }).toThrow("`apply` requires a function");
     });
   });
 });
